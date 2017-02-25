@@ -12,9 +12,13 @@ class API(object):
         self.api_key = api_key
         self.api_secret = api_secret
         self.api_url = "https://api.zaif.jp/api/1"
+        self.tapi_url = "https://api.zaif.jp/tapi"
 
-    def request(self, endpoint, method="GET", params=None):
-        url = self.api_url + endpoint
+    def request(self, endpoint, method="GET", params=None, isTapi=False):
+        if isTapi:
+            url = self.tapi_url + endpoint
+        elif not isTapi:
+            url = self.api_url + endpoint
         body = ""
         auth_header = None
 
@@ -52,7 +56,7 @@ class API(object):
 
     ### PUBLIC API ###
 
-    def ticker(self, **params):
+    def ticker(self, currency_pair="btc_jpy", **params):
         """
         ティッカー
         各種最新情報を簡易に取得することができます。
@@ -60,28 +64,36 @@ class API(object):
         None
         :return:
         last 最後の取引の価格
-        bid 現在の買い注文の最高価格
-        ask 現在の売り注文の最安価格
         high 24時間での最高取引価格
         low 24時間での最安取引価格
+        vwap 出来高加重平均取引
         volume 24時間での取引量
-        timestamp 現在の時刻
+        bid 現在の買い注文の最高価格
+        ask 現在の売り注文の最安価格
+        {"last": 136315.0, "high": 139090.0, "low": 127375.0, "vwap": 136163.3273, "volume": 15667.9959, "bid": 136260.0, "ask": 136290.0}
         """
-        endpoint = "/ticker"
+        endpoint = "/ticker/" + currency_pair
         return self.request(endpoint, params=params)
 
-    def trades(self, **params):
+    def trades(self, currency_pair="btc_jpy", **params):
         """
         全取引履歴,
         最新の取引履歴を取得できます。
         :param params:
         offset 指定された数だけスキップ
         :return:
+        date ???
+        price 取引時の価格
+        amount 取引量
+        tid ???
+        currency_pair 通貨ペア
+        trade_type ask or bid
+        [{"date": 1487996824, "price": 136275.0, "amount": 0.1656, "tid": 33270317, "currency_pair": "btc_jpy", "trade_type": "ask"}, ...]
         """
-        endpoint = "/trades"
+        endpoint = "/trades/" + currency_pair
         return self.request(endpoint, params=params)
 
-    def board(self, **params):
+    def board(self, currency_pair="btc_jpy", **params):
         """
         板情報
         板情報を取得できます。
@@ -90,10 +102,22 @@ class API(object):
         :return:
         asks 売り注文の情報
         bids 買い注文の情報
+        {
+            "asks": [
+                        [price, amount],
+                        ...
+                    ],
+            "bids": [
+                       [price, amount],
+                       ...
+                    ]
+        }
+
         """
-        endpoint = "/depth"
+        endpoint = "/depth/" + currency_pair
         return self.request(endpoint, params=params)
 
+    # TODO:API自体には何のでレート算出アルゴリズムを実装
     def rate(self, **params):
         """
         レートの取得
@@ -111,6 +135,7 @@ class API(object):
         endpoint = "/api/exchange/orders/rate"
         return self.request(endpoint, params=params)
 
+    # TODO:API自体には何のでレート算出アルゴリズムを実装
     def x_rate(self, pair="btc_jpy"):
         """
         いろんな通貨間のレート
@@ -152,8 +177,8 @@ class API(object):
         pair 取引ぺア
         created_at 注文の作成日時
         """
-        endpoint = "/api/exchange/orders"
-        return self.request(endpoint, method="POST", params=params)
+        endpoint = ""
+        return self.request(endpoint, method="POST", params=params, isTapi=True)
 
     def outstanding_orders(self, **params):
         """
