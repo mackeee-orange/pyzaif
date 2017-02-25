@@ -1,5 +1,6 @@
 # pycoincheck
 
+This is developping now  
 *pyzaif* is a python wrapper of Zaif's REST API.
 [This is Document](https://corp.zaif.jp/api-docs/)
 
