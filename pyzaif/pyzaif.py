@@ -24,7 +24,6 @@ class API(object):
         if params:
             body = "?" + urllib.parse.urlencode(params)
 
-
         if self.api_key and self.api_secret:
             access_timestamp = str(time.time())
             api_secret = str.encode(self.api_secret)
@@ -50,17 +49,26 @@ class API(object):
     def request_tapi(self, func_name, params=None):
         url = self.tapi_url
         headers = None
+        body = ""
 
         if params is None:
             params = {}
         else:
             params.update({"method": func_name, "nonce": int(time.mktime(datetime.now().timetuple()))})
+            #body = "?" + urllib.parse.urlencode(params)
+
+            print(params)
+        params.update({"method": func_name, "nonce": int(time.mktime(datetime.now().timetuple()))})
         params = urlencode(params)
+        print(params)
+        print(body)
 
         if self.api_key and self.api_secret:
             api_secret = self.api_secret.encode('utf-8')
+
             access_sign = hmac.new(bytearray(api_secret), digestmod=hashlib.sha512)
             access_sign.update(params.encode('utf-8'))
+
             headers = {
                 "key": self.api_key,
                 "sign": access_sign.hexdigest()
@@ -71,10 +79,10 @@ class API(object):
                 s.headers.update(headers)
             response = s.post(url, data=params, headers=headers)
 
-        #response = requests.post(url, data=params, headers=headers)
-
         content = json.loads(response.text)
-        return content
+        if content['success'] == 0:
+            raise Exception(content['error'])
+        return content['return']
 
     ### PUBLIC API ###
 
