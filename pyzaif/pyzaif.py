@@ -49,7 +49,6 @@ class API(object):
     def request_tapi(self, func_name, params=None):
         url = self.tapi_url
         headers = None
-        body = ""
 
         if params is None:
             params = {}
@@ -57,11 +56,8 @@ class API(object):
             params.update({"method": func_name, "nonce": int(time.mktime(datetime.now().timetuple()))})
             #body = "?" + urllib.parse.urlencode(params)
 
-            print(params)
         params.update({"method": func_name, "nonce": int(time.mktime(datetime.now().timetuple()))})
         params = urlencode(params)
-        print(params)
-        print(body)
 
         if self.api_key and self.api_secret:
             api_secret = self.api_secret.encode('utf-8')
@@ -214,34 +210,129 @@ class API(object):
         """
         return self.request_tapi(func_name="get_info")
 
+    def get_info2(self):
+        return self.request_tapi(func_name="get_info2")
+
+    def get_personal_info(self):
+        return self.request_tapi(func_name="get_personal_info")
+
+    def get_trade_history(self, **params):
+        """
+        ユーザー自身の取引履歴を取得します。
+        :param params:
+        parameter required description data_type default
+        from	No	この順番のレコードから取得	numerical	0
+        count	No	取得するレコード数	numerical	1000
+        from_id	No	このトランザクションIDのレコードから取得	numerical	0
+        end_id	No	このトランザクションIDのレコードまで取得	numerical	infinity
+        order	No	ソート順	ASC (昇順)もしくは DESC (降順)	DESC
+        since	No	開始タイムスタンプ	UNIX time	0
+        end	No	終了タイムスタンプ	UNIX time	infinity
+        currency_pair	No	通貨ペア。指定なしで全ての通貨ペア	(例) btc_jpy	全ペア
+        is_token	No	true：カウンターパーティトークン以外の情報を取得
+        false：カウンターパーティトークンの情報を取得	boolean	false
+        :return:
+        """
+        return self.request_tapi(func_name="get_trade_history", params=params)
+
+    def active_orders(self, **params):
+        """
+        現在有効な注文一覧を取得します（未約定注文一覧）。
+        :param params:
+        parameter required description data_type default
+        currency_pair	No	取得する通貨ペア。指定なしで全ての通貨ペア	(例) btc_jpy	全てのペア
+        is_token	No	true：カウンターパーティトークン以外の情報を取得
+        false：カウンターパーティトークンの情報を取得	boolean	false
+        is_token_both	No	true：全てのアクティブなオーダー情報を取得
+        false：currency_pairやis_tokenに従ったオーダー情報を取得	boolean	false
+        :return:
+        """
+        return self.request_tapi(func_name="active_orders", params=params)
+
+    def trade(self, **params):
+        """
+        新規注文
+        :param params:
+        parameter required description data_type default
+        currency_pair	Yes	発注する通貨ペア	(例) btc_jpy	-
+        action	Yes	注文の種類	bid もしくは ask	-
+        price	Yes	指値注文価格	numerical	-
+        amount	Yes	数量(例: 0.3)	numerical	-
+        limit	No	リミット注文価格	numerical
+        :return:
+        """
+        return self.request_tapi(func_name="trade", params=params)
+
     def new_order(self, **params):
         """
         新規注文
         :param params:
-        pair 取引ペア。現在は "btc_jpy" のみです。
-        order_type 注文方法
-            order_type は全部で8つあります。
-            "buy" 指値注文 現物取引 買い
-            "sell" 指値注文 現物取引 売り
-            "market_buy" 成行注文 現物取引 買い
-            "market_sell" 成行注文 現物取引 売り
-            "leverage_buy" 指値注文 レバレッジ取引新規 買い
-            "leverage_sell" 指値注文 レバレッジ取引新規 売り
-            "close_long" 指値注文 レバレッジ取引決済 売り
-            "close_short" 指値注文 レバレッジ取引決済 買い
-        rate 注文のレート。（例）28000
-        amount 注文での量。（例）0.1
-        market_buy_amount 成行買で利用する日本円の金額。（例）10000
-        position_id 決済するポジションのID
-        stop_loss_rate 逆指値レート ( 逆指値とは？ )
+        parameter required description data_type default
+        currency_pair	Yes	発注する通貨ペア	(例) btc_jpy	-
+        action	Yes	注文の種類	bid もしくは ask	-
+        price	Yes	指値注文価格	numerical	-
+        amount	Yes	数量(例: 0.3)	numerical	-
+        limit	No	リミット注文価格	numerical
         :return:
-        id 新規注文のID
-        rate 注文のレート
-        amount 注文の量
-        order_type 注文方法
-        stop_loss_rate 逆指値レート
-        pair 取引ぺア
-        created_at 注文の作成日時
         """
-        return self.request_tapi(params=params)
+        return self.request_tapi(func_name="trade", params=params)
+
+    def cancel_order(self, **params):
+        """
+        :param params:
+        parameter required description data_type default
+        order_id	Yes	注文ID（tradeまたはactive_ordersで取得できます）	numerical	-
+        is_token	No	true：カウンターパーティトークン以外のオーダーを取り消したい時   boolean	false
+                        false：カウンターパーティトークンのオーダーを取り消したい時	    boolean	false
+        :return:
+        """
+        return self.request_tapi(func_name="cancel_order", params=params)
+
+    def withdraw(self, **params):
+        """
+        引き出し
+        :param params:
+        parameter required description data_type default
+        currency	Yes	引き出す通貨	btc もしくは mona	-
+        address	Yes	送信先のアドレス	address string	-
+        message	No	送信メッセージ(XEMのみ)	ASCII string	-
+        amount	Yes	引き出す金額(例: 0.3)	numerical	-
+        opt_fee	No	採掘者への手数料(例: 0.003) (XEM以外)	numerical	-
+        :return:
+        """
+        return self.request_tapi(func_name="withdraw", params=params)
+
+    def deposit_history(self, **params):
+        """
+        入金履歴
+        :param params:
+        parameter required description data_type default
+        currency	Yes	通貨。jpy / btc / mona 等を指定	TEXT
+        from	No	この順番のレコードから取得	numerical	0
+        count	No	取得するレコード数	numerical	1000
+        from_id	No	この入金IDのレコードから取得	numerical	0
+        end_id	No	この入金IDのレコードまで取得	numerical	infinity
+        order	No	ソート順	ASC (昇順)もしくは DESC (降順)	DESC
+        since	No	開始タイムスタンプ	UNIX time	0
+        end	No	終了タイムスタンプ	UNIX time	infinity
+        :return:
+        """
+        return self.request_tapi(func_name="deposit_history", params=params)
+
+    def withdraw_history(self, **params):
+        """
+        出金履歴
+        :param params:
+        parameter required description data_type default
+        currency	Yes	通貨。jpy / btc / mona 等を指定	TEXT
+        from	No	この順番のレコードから取得	numerical	0
+        count	No	取得するレコード数	numerical	1000
+        from_id	No	この出金IDのレコードから取得	numerical	0
+        end_id	No	この出金IDのレコードまで取得	numerical	infinity
+        order	No	ソート順	ASC (昇順)もしくは DESC (降順)	DESC
+        since	No	開始タイムスタンプ	UNIX time	0
+        end	No	終了タイムスタンプ	UNIX time	infinity
+        :return:
+        """
+        return self.request_tapi(func_name="withdraw_history", params=params)
 
