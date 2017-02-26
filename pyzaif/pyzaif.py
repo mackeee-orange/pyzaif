@@ -14,11 +14,8 @@ class API(object):
         self.api_url = "https://api.zaif.jp/api/1"
         self.tapi_url = "https://api.zaif.jp/tapi"
 
-    def request(self, endpoint, method="GET", params=None, isTapi=False):
-        if isTapi:
-            url = self.tapi_url + endpoint
-        elif not isTapi:
-            url = self.api_url + endpoint
+    def request(self, endpoint, method="GET", params=None):
+        url = self.api_url + endpoint
         body = ""
         auth_header = None
 
@@ -32,6 +29,39 @@ class API(object):
             access_timestamp = str(time.time())
             api_secret = str.encode(self.api_secret)
             text = str.encode(access_timestamp + method + endpoint + body)
+            access_sign = hmac.new(api_secret,
+                                   text,
+                                   hashlib.sha512).hexdigest()
+            auth_header = {
+                "ACCESS-KEY": self.api_key,
+                "ACCESS-TIMESTAMP": access_timestamp,
+                "ACCESS-SIGN": access_sign,
+                "Content-Type": "application/json"
+            }
+
+        with requests.Session() as s:
+            if auth_header:
+                s.headers.update(auth_header)
+
+            if method == "GET":
+                response = s.get(url, params=params)
+            else:  # method == "POST":
+                response = s.post(url, data=json.dumps(params))
+
+        content = json.loads(response.content.decode("utf-8"))
+        return content
+
+    def request_tapi(self, params=None):
+        url = self.tapi_url
+        body = ""
+        auth_header = None
+
+        body = json.dumps(params)
+
+        if self.api_key and self.api_secret:
+            access_timestamp = str(time.time())
+            api_secret = str.encode(self.api_secret)
+            text = str.encode(access_timestamp + body)
             access_sign = hmac.new(api_secret,
                                    text,
                                    hashlib.sha512).hexdigest()
