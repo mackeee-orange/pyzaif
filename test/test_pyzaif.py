@@ -1,6 +1,5 @@
 import pyzaif
 import unittest
-import os
 
 
 class TestPyzaif(unittest.TestCase):
