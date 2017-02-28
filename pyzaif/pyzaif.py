@@ -7,7 +7,7 @@ import hmac
 import hashlib
 import urllib
 from datetime import datetime
-from future.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 class API(object):
     def __init__(self, api_key=None, api_secret=None):
@@ -27,7 +27,7 @@ class API(object):
         if self.api_key and self.api_secret:
             access_timestamp = str(time.time())
             api_secret = str.encode(self.api_secret)
-            text = str.encode(access_timestamp +  endpoint + body)
+            text = str.encode(access_timestamp + endpoint + body)
             access_sign = hmac.new(api_secret,
                                    text,
                                    hashlib.sha512).hexdigest()
@@ -54,7 +54,6 @@ class API(object):
             params = {}
         else:
             params.update({"method": func_name, "nonce": int(time.mktime(datetime.now().timetuple()))})
-            #body = "?" + urllib.parse.urlencode(params)
 
         params.update({"method": func_name, "nonce": int(time.mktime(datetime.now().timetuple()))})
         params = urlencode(params)
